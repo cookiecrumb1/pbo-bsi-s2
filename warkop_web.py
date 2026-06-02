@@ -59,8 +59,6 @@ HARGA_MENU = {
 @st.dialog("Konfirmasi Pesanan")
 def konfirmasi_popup(nama_menu):
     harga = HARGA_MENU[nama_menu]
-    
-    # --- UPDATE: Menambahkan input angka untuk memilih jumlah porsi ---
     jumlah = st.number_input(f"Berapa jumlah **{nama_menu}** yang ini dipesan?", min_value=1, value=1, step=1)
     subtotal = harga * jumlah
     
@@ -69,13 +67,10 @@ def konfirmasi_popup(nama_menu):
     col_ya, col_batal = st.columns(2)
     with col_ya:
         if st.button("Ya, Tambahkan", use_container_width=True):
-            # --- UPDATE: Memasukkan pesanan ke dictionary keranjang ---
-            # Jika menu sudah ada, tambahkan jumlahnya. Jika belum, buat baru.
             if nama_menu in st.session_state.keranjang:
                 st.session_state.keranjang[nama_menu] += jumlah
             else:
                 st.session_state.keranjang[nama_menu] = jumlah
-                
             st.rerun() 
             
     with col_batal:
@@ -87,7 +82,6 @@ def struk_popup():
     st.write("### Rincian Pesanan:")
     total_bayar = 0
     
-    # --- UPDATE: Menyesuaikan perulangan dengan format Dictionary ---
     i = 1
     for item, jumlah in st.session_state.keranjang.items():
         harga_satuan = HARGA_MENU.get(item, 0)
@@ -101,23 +95,28 @@ def struk_popup():
     st.info("👨‍🍳 Silakan tunjukkan layar ini ke kasir.")
     
     if st.button("Selesai & Bayar", type="primary", use_container_width=True):
-        st.session_state.keranjang = {}  # Mengosongkan keranjang (Dictionary kosong)
+        st.session_state.keranjang = {}
         st.rerun()
 
-# --- BAGIAN 5: TAMPILAN ANTARMUKA UTAMA (UI) ---
+# --- BAGIAN 5: INISIALISASI SESSION STATE ---
+
+if 'keranjang' not in st.session_state:
+    st.session_state.keranjang = {}
+
+# GANTI SIDEBAR → pakai session_state untuk navigasi
+if 'halaman' not in st.session_state:
+    st.session_state.halaman = "Pilih Menu"
+
+menu_utama = st.session_state.halaman
+
+# --- BAGIAN 6: TAMPILAN ANTARMUKA UTAMA (UI) ---
 
 st.title("☕ Warkop Digital")
 st.write("Kopi - Roti Bakar - Indomie - Mie Ayam & Bakso")
 st.write("---")
 
-# --- UPDATE: Mengubah inisialisasi keranjang menjadi Dictionary {} ---
-if 'keranjang' not in st.session_state:
-    st.session_state.keranjang = {}
-
-menu_utama = st.sidebar.radio("Navigasi", ["Pilih Menu", "Lihat Keranjang"])
-
 if menu_utama == "Pilih Menu":
-    st.write("### Pilih Kategori")
+    st.write("### Menu")
     kategori = st.radio(" ", ["MAKANAN", "MINUMAN"], horizontal=True, label_visibility="collapsed")
     st.write("---")
 
@@ -200,7 +199,6 @@ elif menu_utama == "Lihat Keranjang":
         total_sementara = 0
         i = 1
         
-        # --- UPDATE: Menyesuaikan tampilan keranjang dengan Dictionary ---
         for item, jumlah in st.session_state.keranjang.items():
             harga_satuan = HARGA_MENU.get(item, 0)
             subtotal_item = harga_satuan * jumlah
@@ -214,8 +212,23 @@ elif menu_utama == "Lihat Keranjang":
         c_hapus, c_bayar = st.columns(2)
         with c_hapus:
             if st.button("Kosongkan Keranjang", use_container_width=True):
-                st.session_state.keranjang = {} # Mengosongkan jadi Dictionary kosong
+                st.session_state.keranjang = {}
                 st.rerun()
         with c_bayar:
             if st.button("Bayar di Kasir", type="primary", use_container_width=True):
                 struk_popup()
+
+# --- BAGIAN 7: BOTTOM NAVIGATION BAR ---
+jumlah_item = len(st.session_state.keranjang)
+badge = f" ({jumlah_item})" if jumlah_item > 0 else ""
+
+with st.container():
+    nav1, nav2 = st.columns(2)
+    with nav1:
+        if st.button(f"🍽️ Pilih Menu", key="nav_menu", use_container_width=True):
+            st.session_state.halaman = "Pilih Menu"
+            st.rerun()
+    with nav2:
+        if st.button(f"🛒 Keranjang{badge}", key="nav_keranjang", use_container_width=True):
+            st.session_state.halaman = "Lihat Keranjang"
+            st.rerun()
