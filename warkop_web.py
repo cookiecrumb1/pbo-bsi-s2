@@ -34,9 +34,12 @@ try:
 except:
     pass 
 
-with open("style.css", "r", encoding="utf-8") as f:
-    css = f.read()
-    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+try:
+    with open("style.css", "r", encoding="utf-8") as f:
+        css = f.read()
+        st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+except:
+    pass
     
 # --- BAGIAN 3: DATA MASTER ---
 HARGA_MENU = {
@@ -54,12 +57,18 @@ HARGA_MENU = {
     "Soda": 8000
 }
 
+# Kelompok Menu untuk Otomatisasi UI Loop
+MENU_KATEGORI = {
+    "MAKANAN": ["Nasi Goreng", "Mie Goreng", "Roti Bakar", "Kentang Goreng", "Mie Ayam", "Bakso"],
+    "MINUMAN": ["Coffee", "Susu", "Orange Juice", "Teh", "Air Mineral", "Soda"]
+}
+
 # --- BAGIAN 4: FUNGSI POP-UP (DIALOG BOX) ---
 
 @st.dialog("Konfirmasi Pesanan")
 def konfirmasi_popup(nama_menu):
     harga = HARGA_MENU[nama_menu]
-    jumlah = st.number_input(f"Berapa jumlah **{nama_menu}** yang ini dipesan?", min_value=1, value=1, step=1)
+    jumlah = st.number_input(f"Berapa jumlah **{nama_menu}** yang ingin dipesan?", min_value=1, value=1, step=1)
     subtotal = harga * jumlah
     
     st.write(f"Total untuk {jumlah} {nama_menu}: **Rp{subtotal:,}**")
@@ -71,10 +80,13 @@ def konfirmasi_popup(nama_menu):
                 st.session_state.keranjang[nama_menu] += jumlah
             else:
                 st.session_state.keranjang[nama_menu] = jumlah
+            
+            st.session_state.selected_menu = None
             st.rerun() 
             
     with col_batal:
         if st.button("Batal", use_container_width=True):
+            st.session_state.selected_menu = None
             st.rerun() 
 
 @st.dialog("🧾 Struk Pembayaran")
@@ -96,6 +108,7 @@ def struk_popup():
     
     if st.button("Selesai & Bayar", type="primary", use_container_width=True):
         st.session_state.keranjang = {}
+        st.session_state.show_struk = False
         st.rerun()
 
 # --- BAGIAN 5: INISIALISASI SESSION STATE ---
@@ -103,94 +116,137 @@ def struk_popup():
 if 'keranjang' not in st.session_state:
     st.session_state.keranjang = {}
 
-# GANTI SIDEBAR → pakai session_state untuk navigasi
 if 'halaman' not in st.session_state:
-    st.session_state.halaman = "Pilih Menu"
+    st.session_state.halaman = "Landing Page"
+
+if 'selected_menu' not in st.session_state:
+    st.session_state.selected_menu = None
+
+if 'show_struk' not in st.session_state:
+    st.session_state.show_struk = False
 
 menu_utama = st.session_state.halaman
 
 # --- BAGIAN 6: TAMPILAN ANTARMUKA UTAMA (UI) ---
 
-st.title("☕ Warkop Digital")
-st.write("Kopi - Roti Bakar - Indomie - Mie Ayam & Bakso")
-st.write("---")
+# 1. TAMPILAN: LANDING PAGE
+if menu_utama == "Landing Page":
+    st.markdown('''
+        <style>
+        /* 1. Atur halaman utama agar flexbox-nya siap menengahkan konten secara global */
+        section.main {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
+        }
 
-if menu_utama == "Pilih Menu":
+        /* 2. Atur wrapper utama box hitam transparan di tengah layar browser */
+        .main .block-container {
+            background-color: rgba(0, 0, 0, 0.6) !important;
+            box-shadow: none !important;
+            border: none !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
+            max-width: 600px !important;
+            min-height: 70vh !important;
+            margin: auto !important;
+            padding: 2rem !important;
+        }
+
+        /* 3. Paksa blok vertikal Streamlit untuk menyusun teks & tombol di satu garis tengah vertikal */
+        .main [data-testid="stVerticalBlock"] {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+        }
+
+        /* 4. SOLUSI UTAMA: Meremukkan stButton bawaan agar membungkus tombol di tengah secara absolut */
+        .main div.stButton {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
+        }
+
+        /* Sembunyikan bottom bar bawaan di landing page */
+        [data-testid="stBottom"] {
+            display: none !important;
+        }
+
+        /* 5. Kustomisasi Tombol "PESAN" Kotak Kuning */
+        .stButton > button {
+            background-color: #FFCC00 !important; 
+            color: #000000 !important;            
+            border: 4px solid #000000 !important; 
+            border-radius: 0px !important;        
+            font-size: 24px !important;
+            font-weight: bold !important;
+            letter-spacing: 2px !important;
+            height: 65px !important;
+            width: 280px !important;
+            max-width: 280px !important;
+            box-shadow: 0px 6px 15px rgba(0,0,0,0.5) !important;
+            transition: 0.2s ease-in-out !important;
+            margin: 0 auto !important;
+        }
+        .stButton > button:hover {
+            background-color: #FFE066 !important;
+            transform: scale(1.05) !important;
+        }
+        </style>
+    ''', unsafe_allow_html=True)
+    
+    # Judul Menu Utama (Text-align center sudah terkunci)
+    st.markdown("<h1 style='color: #FFFFFF; font-family: sans-serif; font-size: 52px; font-weight: bold; letter-spacing: 4px; margin-bottom: 40px; text-shadow: 3px 3px 10px rgba(0,0,0,0.95); text-align: center;'>MENU DIGITAL</h1>", unsafe_allow_html=True)
+    
+    # Tombol PESAN
+    if st.button("PESAN", key="btn_landing_pesan"):
+        st.session_state.halaman = "Pilih Menu"
+        st.rerun()
+
+# 2. TAMPILAN: PILIH MENU
+elif menu_utama == "Pilih Menu":
+    st.title("☕ Warkop Digital")
+    st.write("Kopi - Roti Bakar - Indomie - Mie Ayam & Bakso")
+    st.write("---")
     st.write("### Menu")
     kategori = st.radio(" ", ["MAKANAN", "MINUMAN"], horizontal=True, label_visibility="collapsed")
     st.write("---")
 
-    if kategori == "MAKANAN":
+    daftar_item = MENU_KATEGORI[kategori]
+    
+    for idx in range(0, len(daftar_item), 2):
         col1, col2 = st.columns(2)
+        
         with col1:
-            st.image("images/nasi_goreng.jpg", use_container_width=True)
-            st.write(f"**Nasi Goreng** (Rp{HARGA_MENU['Nasi Goreng']:,})")
-            if st.button("Pesan Nasi Goreng", key="ng"): konfirmasi_popup("Nasi Goreng")
-        with col2:
-            st.image("images/mie_goreng.jpg", use_container_width=True)
-            st.write(f"**Mie Goreng** (Rp{HARGA_MENU['Mie Goreng']:,})")
-            if st.button("Pesan Mie Goreng", key="mg"): konfirmasi_popup("Mie Goreng")
-        
-        st.write("---")
-        
-        col3, col4 = st.columns(2)
-        with col3:
-            st.image("images/roti_bakar.jpg", use_container_width=True)
-            st.write(f"**Roti Bakar** (Rp{HARGA_MENU['Roti Bakar']:,})")
-            if st.button("Pesan Roti Bakar", key="rb"): konfirmasi_popup("Roti Bakar")
-        with col4:
-            st.image("images/kentang_goreng.jpg", use_container_width=True)
-            st.write(f"**Kentang Goreng** (Rp{HARGA_MENU['Kentang Goreng']:,})")
-            if st.button("Pesan Kentang Goreng", key="kg"): konfirmasi_popup("Kentang Goreng")
-
+            item = daftar_item[idx]
+            img_path = f"images/{item.lower().replace(' ', '_')}.jpg"
+            st.image(img_path, use_container_width=True)
+            st.write(f"**{item}** (Rp{HARGA_MENU[item]:,})")
+            if st.button(f"Pesan {item}", key=f"btn_{idx}", use_container_width=True):
+                st.session_state.selected_menu = item
+                st.rerun()
+                
+        if idx + 1 < len(daftar_item):
+            with col2:
+                item = daftar_item[idx+1]
+                img_path = f"images/{item.lower().replace(' ', '_')}.jpg"
+                st.image(img_path, use_container_width=True)
+                st.write(f"**{item}** (Rp{HARGA_MENU[item]:,})")
+                if st.button(f"Pesan {item}", key=f"btn_{idx+1}", use_container_width=True):
+                    st.session_state.selected_menu = item
+                    st.rerun()
         st.write("---")
 
-        col5, col6 = st.columns(2)
-        with col5:
-            st.image("images/mie_ayam.jpg", use_container_width=True)
-            st.write(f"**Mie Ayam** (Rp{HARGA_MENU['Mie Ayam']:,})")
-            if st.button("Pesan Mie Ayam", key="ma"): konfirmasi_popup("Mie Ayam")
-        with col6:
-            st.image("images/bakso.jpg", use_container_width=True)
-            st.write(f"**Bakso** (Rp{HARGA_MENU['Bakso']:,})")
-            if st.button("Pesan Bakso", key="bk"): konfirmasi_popup("Bakso")
-
-    elif kategori == "MINUMAN":
-        col1, col2 = st.columns(2)
-        with col1:
-            st.image("images/coffee.jpg", use_container_width=True)
-            st.write(f"**Coffee** (Rp{HARGA_MENU['Coffee']:,})")
-            if st.button("Pesan Coffee", key="cf"): konfirmasi_popup("Coffee")
-        with col2:
-            st.image("images/susu.jpg", use_container_width=True)
-            st.write(f"**Susu** (Rp{HARGA_MENU['Susu']:,})")
-            if st.button("Pesan Susu", key="ss"): konfirmasi_popup("Susu")
-        
-        st.write("---")
-
-        col3, col4 = st.columns(2)
-        with col3:
-            st.image("images/orange_juice.jpg", use_container_width=True)
-            st.write(f"**Orange Juice** (Rp{HARGA_MENU['Orange Juice']:,})")
-            if st.button("Pesan Orange Juice", key="oj"): konfirmasi_popup("Orange Juice")
-        with col4:
-            st.image("images/teh.jpg", use_container_width=True)
-            st.write(f"**Teh** (Rp{HARGA_MENU['Teh']:,})")
-            if st.button("Pesan Teh", key="th"): konfirmasi_popup("Teh")
-
-        st.write("---")
-
-        col5, col6 = st.columns(2)
-        with col5:
-            st.image("images/air_mineral.jpg", use_container_width=True)
-            st.write(f"**Air Mineral** (Rp{HARGA_MENU['Air Mineral']:,})")
-            if st.button("Pesan Air Mineral", key="am"): konfirmasi_popup("Air Mineral")
-        with col6:
-            st.image("images/soda.jpg", use_container_width=True)
-            st.write(f"**Soda** (Rp{HARGA_MENU['Soda']:,})")
-            if st.button("Pesan Soda", key="sd"): konfirmasi_popup("Soda")
-
+# 3. TAMPILAN: LIHAT KERANJANG
 elif menu_utama == "Lihat Keranjang":
+    st.title("☕ Warkop Digital")
     st.header("🛒 Keranjang Anda")
     
     if not st.session_state.keranjang:
@@ -216,19 +272,28 @@ elif menu_utama == "Lihat Keranjang":
                 st.rerun()
         with c_bayar:
             if st.button("Bayar di Kasir", type="primary", use_container_width=True):
-                struk_popup()
+                st.session_state.show_struk = True
+                st.rerun()
 
 # --- BAGIAN 7: BOTTOM NAVIGATION BAR ---
-jumlah_item = len(st.session_state.keranjang)
-badge = f" ({jumlah_item})" if jumlah_item > 0 else ""
+if menu_utama != "Landing Page":
+    jumlah_item = sum(st.session_state.keranjang.values())
+    badge = f" ({jumlah_item})" if jumlah_item > 0 else ""
 
-with st.container():
-    nav1, nav2 = st.columns(2)
-    with nav1:
-        if st.button(f"🍽️ Pilih Menu", key="nav_menu", use_container_width=True):
-            st.session_state.halaman = "Pilih Menu"
-            st.rerun()
-    with nav2:
-        if st.button(f"🛒 Keranjang{badge}", key="nav_keranjang", use_container_width=True):
-            st.session_state.halaman = "Lihat Keranjang"
-            st.rerun()
+    with st.bottom:
+        nav1, nav2 = st.columns(2)
+        with nav1:
+            if st.button(f"🍽️ Pilih Menu", key="nav_menu", use_container_width=True):
+                st.session_state.halaman = "Pilih Menu"
+                st.rerun()
+        with nav2:
+            if st.button(f"🛒 Keranjang{badge}", key="nav_keranjang", use_container_width=True):
+                st.session_state.halaman = "Lihat Keranjang"
+                st.rerun()
+
+# --- BAGIAN 8: TRIGGER DIALOG BOX ---
+if st.session_state.selected_menu:
+    konfirmasi_popup(st.session_state.selected_menu)
+
+if st.session_state.show_struk:
+    struk_popup()

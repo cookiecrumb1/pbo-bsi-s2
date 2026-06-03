@@ -10,41 +10,38 @@
 
 /* Kotak Utama: Overlay gelap agar coretan background tidak ganggu teks */
 .main .block-container {
-    background-color: rgba(0, 0, 0, 0.7) !important; 
-    padding: 3rem !important;
-    padding-bottom: 110px !important; /* Ruang untuk bottom nav */
+    background-color: rgba(0, 0, 0, 0.75) !important; 
+    padding: 2.5rem !important;
+    padding-bottom: 120px !important; /* Ruang ekstra di bawah agar tidak tertutup bottom nav */
     border-radius: 20px;
     margin-top: 2rem;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Teks Putih/Krem agar kontras */
-.main h1, .main h2, .main h3, .main p, .main label, [data-testid="stMarkdownContainer"] p {
+/* Teks Putih/Krem agar kontras (Tanpa !important pada 'p' agar inline style di Python bekerja) */
+.main h1, .main h2, .main h3, .main label {
     color: #F5F5F5 !important;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
 }
 
-/* ==============================
-   2. STYLING SIDEBAR (Cokelat Tua)
-   ============================== */
+[data-testid="stMarkdownContainer"] p {
+    color: #F5F5F5;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+}
+
+/* Sembunyikan sidebar bawaan sepenuhnya karena memakai bottom nav */
 [data-testid="stSidebar"] {
-    background-color: #3E2723 !important;
-    border-right: 2px solid #211512;
-}
-
-[data-testid="stSidebarNav"] span, 
-[data-testid="stSidebar"] label {
-    color: #EFEBE9 !important;
-    font-weight: bold !important;
+    display: none !important;
 }
 
 /* ==============================
-   3. STYLING FOTO PRODUK (Height & Width Locked)
+   2. STYLING FOTO PRODUK (Responsif & Lock Height)
    ============================== */
 [data-testid="stImage"] img {
     height: 180px !important;
-    width: 250px !important; 
+    width: 100% !important;          /* Mengikuti lebar kolom */
+    max-width: 280px !important;      /* Batas lebar maksimal di PC */
     object-fit: cover !important; 
     margin-left: auto;
     margin-right: auto;
@@ -61,7 +58,7 @@
 }
 
 /* ==============================
-   4. PERBAIKAN ALERT & WARNING
+   3. PERBAIKAN ALERT & WARNING
    ============================== */
 [data-testid="stNotification"] {
     background-color: #5D4037 !important;
@@ -71,7 +68,7 @@
 }
 
 /* ==============================
-   5. STYLING TOMBOL
+   4. STYLING TOMBOL BIASA (Menu & Dialog)
    ============================== */
 .stButton > button {
     background-color: #D32F2F !important;
@@ -89,27 +86,17 @@
 }
 
 /* ==============================
-   6. BOTTOM NAVIGATION BAR
+   5. NATIVE BOTTOM NAVIGATION BAR
    ============================== */
 
-/* Sembunyikan sidebar sepenuhnya */
-[data-testid="stSidebar"] {
-    display: none !important;
-}
-
-/* Wrapper kolom tombol nav — fixed di bawah layar */
+/* Merapikan kontainer bottom bawaan Streamlit */
 [data-testid="stBottom"] {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    z-index: 99999 !important;
     background-color: #1a0a00 !important;
     border-top: 2px solid #D32F2F !important;
     padding: 0 !important;
-    margin: 0 !important;
 }
 
+/* Khusus tombol yang berada di dalam bottom nav */
 [data-testid="stBottom"] .stButton > button {
     background-color: #3E2723 !important;
     color: #EFEBE9 !important;
@@ -118,7 +105,7 @@
     font-weight: bold !important;
     height: 60px !important;
     border: none !important;
-    border-right: 1px solid #D32F2F !important;
+    border-right: 1px solid #211512 !important;
     letter-spacing: 0.5px;
     transition: background-color 0.2s ease !important;
 }
@@ -126,4 +113,5 @@
 [data-testid="stBottom"] .stButton > button:hover {
     background-color: #D32F2F !important;
     transform: none !important;
+    color: white !important;
 }
